@@ -7,10 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <Parse/Parse.h>
 
 @interface CookBook : NSObject
 
 @property(copy,atomic) NSString *name;
 @property(copy,atomic) NSString *imageName;
-
+@property(retain,atomic) PFFile *previewFile;
 @end

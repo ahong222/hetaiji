@@ -8,9 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
-@interface UploadViewController : UIViewController
+@interface UploadViewController : UIViewController<UIActionSheetDelegate,UIImagePickerControllerDelegate>
 @property (strong, nonatomic) IBOutlet UIScrollView *scrollView;
 @property (strong, nonatomic) IBOutlet UINavigationItem *inavItem;
 
 - (IBAction)upload:(id)sender;
+-(void) initEmptyView;
 @end

@@ -50,27 +50,26 @@ NSData *previewImageData;
     screenWidth = screenRect.size.width;
     screenHeight = screenRect.size.height;
     
+    [self initEmptyView];
+    
+    [super viewDidLoad];
+    
+    //添加一层view监听触摸后隐藏键盘
+    UITapGestureRecognizer *tapGr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(viewTapped:)];
+    tapGr.cancelsTouchesInView = NO;
+    [self.view addGestureRecognizer:tapGr];
+}
+
+-(void)initEmptyView{
     //scrollview 背景
     [self.scrollView setBackgroundColor:[UIColor colorWithWhite:0.8 alpha:0.8]];
-
-  
+    
+    
     //菜名
     UILabel *nameLabel=[[UILabel alloc] initWithFrame:CGRectMake(0, 0, 60, 20)];
     nameLabel.text=@"菜名:";
     [nameLabel setBackgroundColor:[UIColor colorWithWhite:0.9 alpha:0.4]];
     [self.scrollView addSubview:nameLabel];
-    
-//    UILabel *nameLabel=[[UILabel alloc] initWithFrame:CGRectMake(0, nameLabel2.frame.origin.y+nameLabel2.frame.size.height, 60, 20)];
-//    nameLabel.text=@"菜名:";
-//    [nameLabel setBackgroundColor:[UIColor colorWithWhite:0.2 alpha:0.4]];
-//    [self.scrollView addSubview:nameLabel];
-
-//    if(1==1){
-//        self.scrollView.frame = CGRectMake(0, 0, screenWidth, screenHeight);
-//        [self.scrollView setContentSize:CGSizeMake(screenWidth, nameLabel.frame.origin.y+nameLabel.frame.size.height+152)];
-//        
-//        return;
-//    }
     
     nameTextField=[[UITextField alloc] initWithFrame:CGRectMake(80, 0, screenWidth, 20)];
     nameTextField.placeholder=@" 请输入菜名";
@@ -85,6 +84,15 @@ NSData *previewImageData;
     UIImageView *imageView=[[UIImageView alloc]initWithFrame:CGRectMake(0, marginTop, screenWidth/2-10, (screenWidth/2-10)*1.5)];
     imageView.image=[UIImage imageNamed:@"default_icon"];
     [imageContent addSubview:imageView];
+    UIImageView *addImageContent=[[UIImageView alloc] initWithFrame:CGRectMake(imageView.frame.size.width-42,imageView.frame.size.height-42 , 32, 32)];
+    [addImageContent setImage:[UIImage imageNamed:@"plus_alt.png"]];
+    //添加点击事件
+    addImageContent.userInteractionEnabled = YES;
+    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(addImage:)];
+    [addImageContent addGestureRecognizer:singleTap];
+    
+    [imageContent addSubview:addImageContent];
+    
     
     remarkTextView=[[UITextView alloc] initWithFrame:CGRectMake(screenWidth/2, marginTop, screenWidth/2-10, (screenWidth/2-10)*1.5)];
     remarkTextView.text=@"大厨的烹饪心得";
@@ -136,15 +144,10 @@ NSData *previewImageData;
     [otherView addSubview:tips];
     
     
-    self.scrollView.frame = CGRectMake(0, 0, screenWidth, screenHeight);
-    [self.scrollView setContentSize:CGSizeMake(screenWidth, otherView.frame.origin.y+otherView.frame.size.height+marginTop+152)];
-    
-    [super viewDidLoad];
-    
-    //添加一层view监听触摸后隐藏键盘
-    UITapGestureRecognizer *tapGr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(viewTapped:)];
-    tapGr.cancelsTouchesInView = NO;
-    [self.view addGestureRecognizer:tapGr];
+//    self.scrollView.frame = CGRectMake(0, 0, screenWidth, screenHeight);
+    NSInteger height=otherView.frame.origin.y+otherView.frame.size.height+marginTop+152;
+    NSLog(@"height %d",height);
+    [self.scrollView setContentSize:CGSizeMake(screenWidth, height)];
 }
 
 -(void)viewTapped:(UITapGestureRecognizer*)tapGr
@@ -306,9 +309,64 @@ NSData *previewImageData;
     //小贴士
     [cookBook setObject:tips.text forKey:@"tips"];
     
+    //username
+    PFUser *curerntUser=[PFUser currentUser];
+    [cookBook setObject:curerntUser.username forKey:@"userName"];
+    
     [cookBook saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         NSLog(@"save cookbook success");
+        
+        for(UIView  *tempView in [self.scrollView subviews]){
+            [tempView removeFromSuperview];
+        }
+        [self initEmptyView];
     }];
     
 }
+
+-(void) addImage:(id)sender{
+    NSLog(@"addImage");
+//    UIActionSheetDelegate *delegate=UIActionSheetDelegate in
+    UIActionSheet *actionSheet=[[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"取消" destructiveButtonTitle:nil otherButtonTitles:@"拍照",@"本地照片", nil];
+//    [actionSheet showInView:self.scrollView];
+//    [actionSheet showFromTabBar:[[self tabBarController] tabBar]];
+    [actionSheet showInView:[self.view window]];
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
+    NSLog(@"click index:%d",buttonIndex);
+    UIImagePickerController *imagePicker=[[UIImagePickerController alloc] init];
+    imagePicker.delegate=self;
+    if(buttonIndex==1){
+        //本地图片
+        imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary ;
+    }else if(buttonIndex==0){
+        //相机
+        if (![UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera]) {
+            UIAlertView *alertView=[[UIAlertView alloc] initWithTitle:@"提示" message:@"您的设备没有相机" delegate:nil cancelButtonTitle:@"取消" otherButtonTitles:nil, nil];
+            [alertView show];
+            return;
+        }
+        imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
+    }else{
+//        NSLog(@"inde")
+//        actionSheet di
+        [actionSheet dismissWithClickedButtonIndex:0 animated:YES];
+        return;
+    }
+    imagePicker.allowsEditing = YES;
+    imagePicker.allowsImageEditing=YES;
+    [self presentModalViewController: imagePicker animated: YES];
+}
+
+//picker 回调
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingImage:(UIImage *)image editingInfo:(NSDictionary *)editingInfo NS_DEPRECATED_IOS(2_0, 3_0){
+    NSLog(@"imagePickerController");
+    previewImageData=UIImagePNGRepresentation(image);
+    
+    [picker dismissViewControllerAnimated:YES completion:^{
+        NSLog(@"dismissViewControllerAnimated");
+    }];
+}
+
 @end

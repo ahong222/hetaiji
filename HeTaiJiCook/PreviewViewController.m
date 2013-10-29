@@ -76,7 +76,13 @@
                 //                NSString *test= [[NSString alloc] initWithUTF8String:string];
                 //                NSString *utf8Name=[PreviewViewController replaceUnicode:(NSString *)([object valueForKey:@"previewImageName"])];
                 //               object objectForKey:<#(NSString *)#>
+                
+//                [NSString alloc] initWithString:<#(NSString *)#>
                 tempCookBook.name=(NSString *)([object valueForKey:@"name"]);
+                tempCookBook.previewFile=(PFFile *)([object valueForKey:@"previewImage"]);
+                if(tempCookBook.previewFile!=nil){
+                    NSLog(@"name:%@,url:%@",tempCookBook.previewFile.name,tempCookBook.previewFile.url);
+                }
                 
                 //                NSString *newName=[PreviewViewController replaceUnicode:cookBook.name];
                 //
@@ -84,7 +90,7 @@
                 [cookBooks addObject:tempCookBook];
                 
                 CookBook *currentCookBook=[cookBooks objectAtIndex:0];
-                NSLog(@"currentCookBook:%@,tempCookBook:%@,name:%@",currentCookBook,tempCookBook,tempCookBook.name);
+//                NSLog(@"currentCookBook:%@,tempCookBook:%@,name:%@",currentCookBook,tempCookBook,tempCookBook.name);
             }
             [self.collectionView reloadData];
         }];
@@ -134,10 +140,20 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     static NSString *identifier=@"Cell";
     UICollectionViewCell *cell=[collectionView dequeueReusableCellWithReuseIdentifier:identifier forIndexPath:indexPath];
-    
-//    UIImageView *imageView=(UIImageView *)([cell viewWithTag:100]);
-    UILabel *label=(UILabel *)([cell viewWithTag:101]);
+//    UICollectionViewCell *cell＝[UICollectionViewCell alloc]
     CookBook *currentCookBook=(CookBook *)[cookBooks objectAtIndex:indexPath.row];
+    NSLog(@"getView currentCookBook:%@",currentCookBook);
+    
+//    PFImageView  *imageView=[[PFImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 50)];
+//    [cell addSubview:imageView];
+    if(currentCookBook.previewFile!=nil){
+        PFImageView *imageView=(PFImageView *)([cell viewWithTag:109]);
+        imageView.file=currentCookBook.previewFile;
+        [imageView loadInBackground];
+    }
+    
+    UILabel *label=(UILabel *)([cell viewWithTag:101]);
+    
     NSLog(@"row:%d,count:%d",indexPath.row,cookBooks.count);
     label.text=@"complete";
     if(currentCookBook!=nil){

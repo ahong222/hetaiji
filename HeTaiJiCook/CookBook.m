@@ -11,5 +11,5 @@
 @implementation CookBook
 @synthesize name;
 @synthesize imageName;
-
+@synthesize previewFile;
 @end
